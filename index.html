@@ -591,6 +591,117 @@
       .vs-divider { order: -1; }
       .action-row { flex-direction: column; }
     }
+
+    /* ── Game Type Toggle ───────────────────────── */
+    .toggle-row { display: flex; gap: 0.5rem; }
+    .toggle-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: rgba(201,168,76,0.12);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    .modal-field-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .modal-field { margin-bottom: 1rem; }
+
+    /* ── Stats Section ──────────────────────────── */
+    .stats-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .player-stats-col { display: flex; flex-direction: column; gap: 1rem; }
+    .stats-player-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.1rem;
+    }
+    .stats-player-label.p1 { color: var(--p1); }
+    .stats-player-label.p2 { color: var(--p2); }
+
+    .venue-row { display: flex; flex-direction: column; gap: 0.45rem; }
+    .venue-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .venue-icon { font-size: 0.85rem; flex-shrink: 0; }
+    .venue-label { color: var(--muted); font-style: italic; flex: 1; }
+    .venue-record { font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--text); flex-shrink: 0; }
+    .venue-pct { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; width: 2.8rem; text-align: right; }
+
+    .decks-header {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .deck-row { margin-bottom: 0.55rem; }
+    .deck-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .deck-name {
+      font-size: 0.82rem;
+      color: var(--text);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 60%;
+    }
+    .deck-record { font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
+    .deck-bar-bg {
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .deck-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+    .deck-bar-fill.p1 { background: var(--p1); }
+    .deck-bar-fill.p2 { background: var(--p2); }
+    .no-deck-data { font-style: italic; font-size: 0.8rem; color: var(--muted); }
+
+    /* ── History additions ──────────────────────── */
+    .history-venue { flex-shrink: 0; font-size: 0.82rem; }
+    .deck-tag {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 5px;
+      background: rgba(201,168,76,0.08);
+      color: var(--gold-dim);
+      flex-shrink: 0;
+      max-width: 75px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -662,6 +773,15 @@
     </div>
   </div>
 
+  <!-- Stats -->
+  <div class="stats-section" id="stats-section">
+    <div class="section-label" style="margin-bottom:1.2rem;">Match Statistics</div>
+    <div class="stats-grid">
+      <div class="player-stats-col" id="stats-p1"></div>
+      <div class="player-stats-col" id="stats-p2"></div>
+    </div>
+  </div>
+
   <!-- Actions -->
   <div class="actions-section">
     <div class="section-label" id="action-label">Log a Match</div>
@@ -693,9 +813,29 @@
 <!-- Note Modal -->
 <div class="modal-overlay hidden" id="note-modal">
   <div class="modal-box">
-    <div class="modal-title" id="note-modal-title">Add a note</div>
-    <input class="modal-input" id="note-input" type="text" placeholder="Opponent, deck, notes... (optional)"
-      onkeydown="if(event.key==='Enter') confirmNote()" maxlength="60" />
+    <div class="modal-title" id="note-modal-title">Log Match</div>
+
+    <div class="modal-field">
+      <span class="modal-field-label">Game Type</span>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btn-inperson" onclick="setGameType('inperson')">⚔️ In Person</button>
+        <button class="toggle-btn" id="btn-online" onclick="setGameType('online')">💻 Online</button>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <span class="modal-field-label">Your Deck</span>
+      <input class="modal-input" id="deck-input" list="deck-suggestions" type="text"
+        placeholder="Deck name (optional)" maxlength="40" style="margin-bottom:0;" />
+      <datalist id="deck-suggestions"></datalist>
+    </div>
+
+    <div class="modal-field">
+      <span class="modal-field-label">Notes</span>
+      <input class="modal-input" id="note-input" type="text" placeholder="Opponent, notes... (optional)"
+        onkeydown="if(event.key==='Enter') confirmNote()" maxlength="60" style="margin-bottom:0;" />
+    </div>
+
     <div class="modal-row">
       <button class="btn-outline" onclick="cancelNote()">Skip</button>
       <button class="btn btn-gold" style="flex:1" onclick="confirmNote()">Save</button>
@@ -717,6 +857,7 @@
   // ── State ──────────────────────────────────────
   let currentPlayer = null; // 1 or 2
   let pendingResult = null;  // 'win' or 'loss'
+  let pendingGameType = 'inperson'; // 'inperson' or 'online'
   let activeTab = 1;
 
   const state = {
@@ -835,6 +976,9 @@
     document.getElementById('action-buttons').classList.remove('hidden');
     document.getElementById('locked-msg').classList.add('hidden');
 
+    // Stats
+    renderStats();
+
     // History
     renderHistory();
   }
@@ -857,14 +1001,20 @@
       list.innerHTML = '<div class="empty-history">No matches yet. May the best planeswalker win.</div>';
       return;
     }
-    list.innerHTML = state.history.map(m => `
-      <div class="history-item ${m.result}-item">
-        <span class="result-pill ${m.result}">${m.result.toUpperCase()}</span>
-        <span class="history-player p${m.player}">${state.names[m.player]}</span>
-        ${m.note ? `<span class="history-note">${escHtml(m.note)}</span>` : '<span class="history-note"></span>'}
-        <span class="history-time">${m.time}</span>
-      </div>
-    `).join('');
+    list.innerHTML = state.history.map(m => {
+      const venueIcon = m.gameType === 'online' ? '💻' : '⚔️';
+      const deckTag = m.deck ? `<span class="deck-tag" title="${escHtml(m.deck)}">${escHtml(m.deck)}</span>` : '';
+      return `
+        <div class="history-item ${m.result}-item">
+          <span class="result-pill ${m.result}">${m.result.toUpperCase()}</span>
+          <span class="history-player p${m.player}">${state.names[m.player]}</span>
+          <span class="history-venue" title="${m.gameType === 'online' ? 'Online' : 'In Person'}">${venueIcon}</span>
+          ${deckTag}
+          ${m.note ? `<span class="history-note">${escHtml(m.note)}</span>` : '<span class="history-note"></span>'}
+          <span class="history-time">${m.time}</span>
+        </div>
+      `;
+    }).join('');
   }
 
   function escHtml(s) {
@@ -874,27 +1024,51 @@
   // ── Match logging ─────────────────────────────
   function logMatch(result) {
     pendingResult = result;
+    pendingGameType = 'inperson';
+    document.getElementById('btn-inperson').classList.add('active');
+    document.getElementById('btn-online').classList.remove('active');
+
+    // Populate deck autocomplete with this player's previously used decks
+    const datalist = document.getElementById('deck-suggestions');
+    datalist.innerHTML = '';
+    const usedDecks = [...new Set(
+      state.history.filter(m => m.player === currentPlayer && m.deck).map(m => m.deck)
+    )];
+    usedDecks.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      datalist.appendChild(opt);
+    });
+
     const title = result === 'win'
       ? `🏆 ${state.names[currentPlayer]} Won!`
       : `💀 ${state.names[currentPlayer]} Lost`;
     document.getElementById('note-modal-title').textContent = title;
     document.getElementById('note-input').value = '';
+    document.getElementById('deck-input').value = '';
     document.getElementById('note-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('note-input').focus(), 50);
+    setTimeout(() => document.getElementById('deck-input').focus(), 50);
+  }
+
+  function setGameType(type) {
+    pendingGameType = type;
+    document.getElementById('btn-inperson').classList.toggle('active', type === 'inperson');
+    document.getElementById('btn-online').classList.toggle('active', type === 'online');
   }
 
   function confirmNote() {
     const note = document.getElementById('note-input').value.trim();
+    const deck = document.getElementById('deck-input').value.trim();
     document.getElementById('note-modal').classList.add('hidden');
-    commitMatch(pendingResult, note);
+    commitMatch(pendingResult, note, deck, pendingGameType);
   }
 
   function cancelNote() {
     document.getElementById('note-modal').classList.add('hidden');
-    commitMatch(pendingResult, '');
+    commitMatch(pendingResult, '', '', pendingGameType);
   }
 
-  function commitMatch(result, note) {
+  function commitMatch(result, note, deck, gameType) {
     const opp = currentPlayer === 1 ? 2 : 1;
     if (result === 'win') {
       state.wins[currentPlayer]++;
@@ -908,7 +1082,7 @@
     const time = now.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' ' +
       now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
 
-    state.history.unshift({ player: currentPlayer, result, note, time });
+    state.history.unshift({ player: currentPlayer, result, note, deck: deck || '', gameType: gameType || 'inperson', time });
     if (state.history.length > 100) state.history.pop();
 
     saveState();
@@ -973,6 +1147,80 @@
       document.body.appendChild(el);
       el.addEventListener('animationend', () => el.remove());
     }
+  }
+
+  // ── Stats ─────────────────────────────────────
+  function renderStats() {
+    [1, 2].forEach(p => {
+      const col = document.getElementById(`stats-p${p}`);
+      const pm = state.history.filter(m => m.player === p);
+
+      // Venue breakdown (treat missing gameType as inperson for old entries)
+      const ip = pm.filter(m => !m.gameType || m.gameType === 'inperson');
+      const on = pm.filter(m => m.gameType === 'online');
+      const ipW = ip.filter(m => m.result === 'win').length;
+      const ipL = ip.filter(m => m.result === 'loss').length;
+      const onW = on.filter(m => m.result === 'win').length;
+      const onL = on.filter(m => m.result === 'loss').length;
+      const ipPct = (ipW + ipL) ? Math.round(ipW / (ipW + ipL) * 100) + '%' : '—';
+      const onPct = (onW + onL) ? Math.round(onW / (onW + onL) * 100) + '%' : '—';
+
+      // Deck breakdown
+      const deckMap = {};
+      pm.forEach(m => {
+        if (!m.deck) return;
+        const key = m.deck.trim().toLowerCase();
+        if (!deckMap[key]) deckMap[key] = { name: m.deck, wins: 0, losses: 0 };
+        if (m.result === 'win') deckMap[key].wins++;
+        else deckMap[key].losses++;
+      });
+      const decks = Object.values(deckMap)
+        .sort((a, b) => {
+          const ar = a.wins / (a.wins + a.losses);
+          const br = b.wins / (b.wins + b.losses);
+          return br - ar || (b.wins + b.losses) - (a.wins + a.losses);
+        })
+        .slice(0, 5);
+
+      const deckHtml = decks.length
+        ? decks.map(d => {
+            const tot = d.wins + d.losses;
+            const pct = Math.round(d.wins / tot * 100);
+            return `
+              <div class="deck-row">
+                <div class="deck-row-top">
+                  <span class="deck-name">${escHtml(d.name)}</span>
+                  <span class="deck-record">${d.wins}W ${d.losses}L · ${pct}%</span>
+                </div>
+                <div class="deck-bar-bg">
+                  <div class="deck-bar-fill p${p}" style="width:${pct}%"></div>
+                </div>
+              </div>`;
+          }).join('')
+        : '<div class="no-deck-data">No deck data yet</div>';
+
+      col.innerHTML = `
+        <div class="stats-player-label p${p}">${escHtml(state.names[p])}</div>
+        <div class="venue-row">
+          <div class="venue-item">
+            <span class="venue-icon">⚔️</span>
+            <span class="venue-label">In Person</span>
+            <span class="venue-record">${ipW}W – ${ipL}L</span>
+            <span class="venue-pct">${ipPct}</span>
+          </div>
+          <div class="venue-item">
+            <span class="venue-icon">💻</span>
+            <span class="venue-label">Online</span>
+            <span class="venue-record">${onW}W – ${onL}L</span>
+            <span class="venue-pct">${onPct}</span>
+          </div>
+        </div>
+        <div>
+          <div class="decks-header">Best Performing Decks</div>
+          ${deckHtml}
+        </div>
+      `;
+    });
   }
 
   // ── Toast ─────────────────────────────────────
